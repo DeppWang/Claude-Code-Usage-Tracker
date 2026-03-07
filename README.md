@@ -44,8 +44,8 @@ Quit
 ## 快速开始
 
 ```bash
-git clone https://github.com/anthropics/ai-usage.git
-cd ai-usage
+git clone https://github.com/anthropics/Claude-Code-Usage-Tracker.git
+cd Claude-Code-Usage-Tracker
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
