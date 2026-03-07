@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.claude-usage-collector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/depp/GitHub/ai-usage/.venv/bin/python3</string>
+        <string>/Users/depp/GitHub/ai-usage/claude_usage.py</string>
+        <string>--collect</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+    </array>
+    <key>StandardOutPath</key>
+    <string>/tmp/claude-usage-collector.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/claude-usage-collector.log</string>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
