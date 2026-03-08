@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import threading
 from datetime import datetime, timedelta
 
@@ -63,7 +64,8 @@ class _MenuDelegate(NSObject):
 
 class ClaudeUsageApp(rumps.App):
     def __init__(self):
-        super().__init__("☁ --.--%", quit_button=None)
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+        super().__init__("--.--%", icon=icon_path, template=True, quit_button=None)
 
         # Static menu items (will update titles in-place)
         self.mi_all = _mono_info_item("All models  --.--%")
@@ -188,11 +190,11 @@ class ClaudeUsageApp(rumps.App):
 
         # ── Title bar (prefer session) ──
         if five_util is not None:
-            self.title = f"☁ {five_util:.1f}%"
+            self.title = f"{five_util:.1f}%"
         elif seven_util is not None:
-            self.title = f"☁ {seven_util:.1f}%"
+            self.title = f"{seven_util:.1f}%"
         else:
-            self.title = "☁ --.--%"
+            self.title = "--.--%"
 
         # ── Quota rows ──
         if seven_util is not None:
