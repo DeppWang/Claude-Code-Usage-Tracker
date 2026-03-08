@@ -67,7 +67,7 @@ python3 claude_usage_app.py
 
 ## 终端脚本
 
-也可以在终端直接运行脚本查看用量
+也可以在终端直接运行脚本查看用量：
 
 ```bash
 # 查看用量报告（自动采集最新数据后展示）
@@ -105,7 +105,7 @@ python3 claude_usage.py
 
 ### 定时采集
 
-菜单栏应用内置 30 分钟定时器，通常不需要 launchd。如只使用脚本需独立定时采集：
+菜单栏应用内置 30 分钟定时器，不需要 launchd，如只使用脚本又想要自动触发新周期需使用 launchd 独立定时采集：
 
 ```bash
 cp com.user.claude-usage-collector.plist ~/Library/LaunchAgents/
