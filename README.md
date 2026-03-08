@@ -112,7 +112,7 @@ cp com.user.claude-usage-collector.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.user.claude-usage-collector.plist
 ```
 
-## 数据说明
+## 数据功能说明
 
 | 区域 | 数据来源 | 说明 |
 |------|---------|------|
@@ -124,7 +124,7 @@ launchctl load ~/Library/LaunchAgents/com.user.claude-usage-collector.plist
 
 ### 自动化功能：5-hour Session 保活 & Quota Reset 触发
 
-每 30 分钟定时器触发时（CST >= 08:00），自动发送 `claude --print --model haiku -p "hi"`：
+每 30 分钟定时器触发时，保存数据并自动发送 `claude --print --model haiku -p "hi"`：
 
 - 保持 5 小时会话窗口不过期
 - 若恰好处于 7 天周期重置后，该请求同时触发新周期
