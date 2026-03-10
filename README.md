@@ -55,6 +55,13 @@ Quit
 ```bash
 git clone https://github.com/DeppWang/Claude-Code-Usage-Tracker.git
 cd Claude-Code-Usage-Tracker
+
+# 菜单栏应用需要 framework build 的 Python，先验证：
+python3 -c "import sysconfig; print(sysconfig.get_config_var('PYTHONFRAMEWORK'))"
+# 输出应为 Python。如果为空，菜单栏图标将不会出现
+# 如果用 pyenv，需加 --enable-framework 重新安装（只需一次）：
+# env PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install $(pyenv version-name) --force
+
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
