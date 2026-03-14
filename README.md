@@ -48,19 +48,13 @@ Quit
 ### 数据流
 
 - **点击图标**：显示缓存数据，同时后台调 API 采集，完成后实时更新菜单
-- **每 30 分钟**：自动调 API 采集更新
+- **每 30 分钟**：自动调 API 采集更新（每天 6:00 开始，对齐整点 :00/:30）
 
 ## 使用步骤
 
 ```bash
 git clone https://github.com/DeppWang/Claude-Code-Usage-Tracker.git
 cd Claude-Code-Usage-Tracker
-
-# 菜单栏应用需要 framework build 的 Python，先验证：
-python3 -c "import sysconfig; print(sysconfig.get_config_var('PYTHONFRAMEWORK'))"
-# 输出应为 Python。如果为空，菜单栏图标将不会出现
-# 如果用 pyenv，需加 --enable-framework 重新安装（只需一次）：
-# env PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install $(pyenv version-name) --force
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -71,6 +65,16 @@ python3 claude_usage_app.py
 ```
 
 > **注意**：首次运行后数据从零开始积累。Quota Daily、Local Daily、Weekly 等历史数据需要运行一段时间后才会出现。Quota Daily 的第一天因无前一天快照做差值计算，不会显示。
+
+如果启动后菜单栏应用没有出现，先检查是否被遮挡，再检查是否使用的「framework build 的 Python」
+
+```shell
+# 菜单栏应用需要 framework build 的 Python，先验证：
+python3 -c "import sysconfig; print(sysconfig.get_config_var('PYTHONFRAMEWORK'))"
+# 输出应为 Python。如果为空，菜单栏图标将不会出现
+# 如果用 pyenv，需加 --enable-framework 重新安装（只需一次）：
+# env PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install $(pyenv version-name) --force
+```
 
 ## 终端脚本
 

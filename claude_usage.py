@@ -517,11 +517,14 @@ def update_local_usage(now_cst: datetime):
 
 # ── Collect Mode ─────────────────────────────────────────────────────────────
 
-def collect(keep_alive: bool = True):
-    """Collect mode: call API → save snapshot → compute daily deltas → update daily_usage."""
+def collect(keep_alive: bool = True) -> list[str]:
+    """Collect mode: call API → save snapshot → compute daily deltas → update daily_usage.
+    Returns list of operation names performed."""
+    ops = []
     token = get_oauth_token()
     api_data = fetch_usage_api(token)
     if api_data == "unauthorized":
+        ops.append("refresh-token")
         # Only refresh token on 401, not on timeout/network errors
         try:
             subprocess.run(
@@ -533,14 +536,17 @@ def collect(keep_alive: bool = True):
         token = get_oauth_token()
         api_data = fetch_usage_api(token)
     if not api_data or api_data == "unauthorized":
-        return
+        ops.append("api-failed")
+        return ops
 
+    ops.append("api-ok")
     now_cst = datetime.now(CST)
 
     snapshots = load_snapshots()
 
-    # Keep 5-hour session alive (every collect() from 08:00 onwards)
-    if keep_alive and now_cst.hour >= 8:
+    # Keep 5-hour session alive (every collect() from 06:00 onwards)
+    if keep_alive and now_cst.hour >= 6:
+        ops.append("hi")
         try:
             subprocess.run(
                 ["claude", "--print", "--model", "haiku", "-p", "hi"],
@@ -558,6 +564,7 @@ def collect(keep_alive: bool = True):
     })
 
     # 3. Save snapshots
+    ops.append("snapshot")
     save_snapshots(snapshots)
 
     # 4. Compute daily deltas from snapshots, merge into daily_usage.json
@@ -609,6 +616,8 @@ def collect(keep_alive: bool = True):
                 weekly_list.append(entry)
 
             save_weekly_usage(weekly_list)
+
+    return ops
 
 
 # ── Report Mode ──────────────────────────────────────────────────────────────

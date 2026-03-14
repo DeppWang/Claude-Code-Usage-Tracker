@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import logging
+import logging.handlers
 import os
 import threading
 from datetime import datetime, timedelta
@@ -28,6 +30,17 @@ from claude_usage import (
     load_weekly_usage,
     scan_local_sessions,
 )
+
+LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude_usage_app.log")
+_fmt = logging.Formatter("%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+_fh = logging.handlers.RotatingFileHandler(LOG_PATH, maxBytes=1_000_000, backupCount=1)
+_fh.setFormatter(_fmt)
+_sh = logging.StreamHandler()
+_sh.setFormatter(_fmt)
+log = logging.getLogger("claude_usage_app")
+log.addHandler(_fh)
+log.addHandler(_sh)
+log.setLevel(logging.INFO)
 
 REFRESH_INTERVAL = 30 * 60  # 30 minutes
 MONO_FONT = NSFont.monospacedSystemFontOfSize_weight_(13, 0)
@@ -110,9 +123,8 @@ class ClaudeUsageApp(rumps.App):
             self.mi_quit,
         ]
 
-        # Timer for periodic refresh
-        self.timer = rumps.Timer(self._timer_tick, REFRESH_INTERVAL)
-        self.timer.start()
+        # Schedule periodic refresh aligned to :00/:30 starting from 06:00
+        self._schedule_aligned_start()
 
         # Load cached data immediately, schedule first collect after 2s
         self._update_from_cache()
@@ -130,12 +142,35 @@ class ClaudeUsageApp(rumps.App):
 
     # ── Callbacks ─────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _next_aligned_tick():
+        """Return (next_tick, delay) for the next :00 or :30 (>= 06:00)."""
+        now = datetime.now(CST)
+        if now.minute < 30:
+            next_tick = now.replace(minute=30, second=0, microsecond=0)
+        else:
+            next_tick = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        if next_tick.hour < 6:
+            next_tick = next_tick.replace(hour=6, minute=0, second=0, microsecond=0)
+            if next_tick <= now:
+                next_tick += timedelta(days=1)
+        return next_tick, max((next_tick - now).total_seconds(), 1)
+
+    def _schedule_aligned_start(self):
+        """Schedule first aligned tick, then repeat at every :00/:30."""
+        next_tick, delay = self._next_aligned_tick()
+        log.info("timer: next tick at %s (delay %.0fs)", next_tick.strftime("%H:%M"), delay)
+        threading.Timer(delay, self._periodic_tick).start()
+
+    def _periodic_tick(self):
+        """Run collect and schedule next :00/:30 tick."""
+        self._do_collect_and_update(keep_alive=True, log_tick=True)
+        next_tick, delay = self._next_aligned_tick()
+        threading.Timer(delay, self._periodic_tick).start()
+
     def _first_collect(self, _sender):
         _sender.stop()
         self._do_collect_and_update()
-
-    def _timer_tick(self, _sender):
-        self._do_collect_and_update(keep_alive=True)
 
     def _open_usage(self, _sender):
         import webbrowser
@@ -143,16 +178,24 @@ class ClaudeUsageApp(rumps.App):
 
     # ── Data collection (background thread) ───────────────────────────────
 
-    def _do_collect_and_update(self, keep_alive=False):
+    def _do_collect_and_update(self, keep_alive=False, log_tick=False):
         _set_mono(self.mi_updated, "Refreshing...")
 
         def _work():
+            ops = []
             try:
-                collect(keep_alive=keep_alive)
+                ops = collect(keep_alive=keep_alive) or []
             except SystemExit:
-                pass  # get_oauth_token() calls sys.exit(1) on failure
-            except Exception:
-                pass
+                ops.append("oauth-exit")
+            except Exception as e:
+                ops.append(f"error:{e}")
+            ops.append("menu-update")
+            if log_tick:
+                next_tick, _ = self._next_aligned_tick()
+                log.info("timer: tick at %s, next %s [%s]",
+                         datetime.now(CST).strftime("%H:%M"),
+                         next_tick.strftime("%H:%M"),
+                         " → ".join(ops))
             # Dispatch to main thread via performSelectorOnMainThread —
             # fires in NSRunLoopCommonModes, so it works even while menu is open
             AppHelper.callAfter(self._update_from_cache)
